@@ -28,8 +28,8 @@ public class SaveImg {
 	}
 	
 	public static boolean isFileExist(String fileName){
-		String userDir = System.getProperty("user.dir");
-		System.out.println(userDir);
+		//String userDir = System.getProperty("user.dir");
+		//System.out.println(userDir);
 		
 		boolean isExist = false;
 		String saveUrl = SAVE_URL + fileName;

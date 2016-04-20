@@ -80,14 +80,14 @@ public class GetItems {
 	 * 获取具体文章的内容
 	 */
 	public static SourceArticle getSourceArticle(String articleId) throws IOException{
-		System.out.println(articleId);
+		//System.out.println(articleId);
 		
 		
 		SourceArticle sourceArt = new SourceArticle();
 		String jsonStr;
 		
 		jsonStr = loadJson(ARTICAL_URL.replace("artical_id", articleId));
-		System.out.print(jsonStr);
+		//System.out.print(jsonStr);
 		//JSONObject json = new JSONObject();
 		JSONObject jsonArr = JSONObject.fromObject(jsonStr);
 		

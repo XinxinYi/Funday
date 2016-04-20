@@ -16,6 +16,7 @@
 		String path = request.getContextPath();
 		String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
 		String articleId = request.getParameter("articleId");//用request得到
+		//String articleId = "2022581";
 		SourceArticle sa = GetItems.getSourceArticle(articleId);			
 %>
 
@@ -28,10 +29,10 @@ img{max-width:370px; max-height:320px; margin-bottom:8px;text-align:center}
 .time{font-size:16px;color:#666;}
 .source{font-size:16px;color:#666;}
 
-.imgDiv{max-width:370px; max-height:320px; margin-bottom:8px;text-align:center}
+.imgDiv{max-width:370px; max-height:320px; margin-bottom:8px;text-align:center;}
 .img{max-width:370px; max-height:320px;}
 
-.content{line-height:38px;text-indent: 2em;font-size:18px;}
+.content{line-height:38px;text-indent: 1em;font-size:18px;}
 
 .code{text-align:center}
 .saoma{color:#007799;font-size:20px;}
@@ -55,25 +56,28 @@ img{max-width:370px; max-height:320px; margin-bottom:8px;text-align:center}
 	<%
 		String content = ModifyHtml.getString(sa.getContent(), "style");
 		out.println(content);
-		
+		System.out.println(content);
 		List pics = ModifyHtml.getImgStr(content);
 		pics = ModifyHtml.getImgStr(content);
-		System.out.println(pics.toString());
+		//System.out.println(pics.toString());
 		for(int i=0;i<pics.size();i++){
 			String fileName = i+".jpg";
 			if(SaveImg.isFileExist(fileName)){
 				
 			}else{
 				String saveUrl = SaveImg.saveImg(pics.get(i).toString(),fileName);			
-				System.out.println(saveUrl);
+				//System.out.println(saveUrl);
 			}
+			String imgUrl = "http://tongyuan.tunnel.qydev.com/Funday/files/article/";
 			%>
-			<img alt="" src="http://tongyuan.tunnel.qydev.com/Funday/files/article/2"<%out.println(i+".jpg"); %>>						
+			<div class="imgDiv">
+			<img alt="" class="img" src=<%=imgUrl + i + ".jpg"%>>						
+			</div>
 			<%		
 		}
 		//System.out.println(content);
 	%>
-	<img alt="" src="http://tongyuan.tunnel.qydev.com/Funday/files/22.gif">
+	<!--  <img alt="" src="http://tongyuan.tunnel.qydev.com/Funday/files/22.gif">-->
 	<img alt=" " src="http://tongyuan.tunnel.qydev.com/Funday/files/0.gif">
 		</div>
 	

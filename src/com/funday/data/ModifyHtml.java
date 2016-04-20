@@ -88,7 +88,7 @@ public class ModifyHtml {
 	            String regEx_img = "src\\s*=\\s*\"?(.*?)(\"|>|\\s+)"; 
 	            p_image = Pattern.compile(regEx_img,Pattern.CASE_INSENSITIVE);   
 	           m_image = p_image.matcher(htmlStr);
-	           System.out.print(m_image.find());
+	           //System.out.print(m_image.find());
 	           
 	           int i=0;
 	           int j=0;
@@ -97,7 +97,7 @@ public class ModifyHtml {
 	           while(m_image.find()){   
 	        	  
 	           //if(m_image.find()){
-	                img = img + "," + m_image.group();   
+	                //img = img + "," + m_image.group();   
 	               // Matcher m  = Pattern.compile("src=\"?(.*?)(\"|>|\\s+)").matcher(img); //Æ¥Åäsrc
 
 	              // Matcher m  = Pattern.compile("src\\s*=\\s*\"?(.*?)(\"|>|\\s+)").matcher(img);
@@ -105,7 +105,9 @@ public class ModifyHtml {
 	              //  while(m.find()){
 	              // if(m.find()){
 	              pics.add(m_image.group(1));
-	               
+	              System.out.println("*********");
+	             System.out.println(m_image.group().toString());  
+	             System.out.println("*********");
 	                }
 	        //   }   
 	               return pics;   
