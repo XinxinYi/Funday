@@ -45,8 +45,8 @@ img{max-width:370px; max-height:320px; margin-bottom:8px;text-align:center}
 	
 	<div class="header">
 	<p class="title"><%out.println(sa.getHeader());%></p>
-	<p class="time"><%out.println(sa.getDate()); %></p>
-	<p class="source"><%out.println(sa.getSourc()); %><%out.println(sa.getEditor());%></p>
+	<p class="time"><%out.println(sa.getDate().substring(0, 10)); %></p>
+	 <p class="source"><%out.println(sa.getSourc()); %><%out.println(sa.getEditor());%></p>
 	</div>
 	<div class="imgDiv">
 		<img class="img" alt="" src="<%=sa.getPicture_src()%>">
@@ -57,9 +57,11 @@ img{max-width:370px; max-height:320px; margin-bottom:8px;text-align:center}
 		String content = ModifyHtml.getString(sa.getContent(), "style");
 		out.println(content);
 		System.out.println(content);
-		List pics = ModifyHtml.getImgStr(content);
-		pics = ModifyHtml.getImgStr(content);
+		//保存图片貌似没有意义		
+		//List pics = ModifyHtml.getImgStr(content);
+		//pics = ModifyHtml.getImgStr(content);
 		//System.out.println(pics.toString());
+		/*
 		for(int i=0;i<pics.size();i++){
 			String fileName = i+".jpg";
 			if(SaveImg.isFileExist(fileName)){
@@ -69,12 +71,7 @@ img{max-width:370px; max-height:320px; margin-bottom:8px;text-align:center}
 				//System.out.println(saveUrl);
 			}
 			String imgUrl = "http://tongyuan.tunnel.qydev.com/Funday/files/article/";
-			%>
-			<div class="imgDiv">
-			<img alt="" class="img" src=<%=imgUrl + i + ".jpg"%>>						
-			</div>
-			<%		
-		}
+		}*/
 		//System.out.println(content);
 	%>
 	<!--  <img alt="" src="http://tongyuan.tunnel.qydev.com/Funday/files/22.gif">-->

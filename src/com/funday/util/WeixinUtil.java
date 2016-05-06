@@ -196,7 +196,7 @@ public class WeixinUtil {
 		}				
 	}
 	/*
-	 * 临时文件上传
+	 * 临时文件上传，返回media_id
 	 */
 	public static String upload(String filePath,String accessToken,String type) throws IOException{
 		File file = new File(filePath);
@@ -282,7 +282,91 @@ public class WeixinUtil {
 	
 	}
 	/*
-	 * 临时文件上传
+	 * 临时文件上传,返回url
+	 */
+	public static String uploadImg(String filePath,String accessToken) throws IOException{
+		File file = new File(filePath);
+		if(!file.exists() || !file.isFile()){
+			throw new IOException("文件不存在！");
+		}
+		String url = WeixinUtil.UPLOAD_IMG_URL.replace("ACCESS_TOKEN", accessToken);
+		URL urlObj = new URL(url);
+		HttpURLConnection con = (HttpURLConnection) urlObj.openConnection();
+		
+		con.setRequestMethod("POST");
+		con.setDoInput(true);
+		con.setDoOutput(true);
+		con.setUseCaches(false);
+		
+		//设置请求头信息
+		con.setRequestProperty("Connection", "Keep-Alive");
+		con.setRequestProperty("Charset", "UTF-8");
+		//设置边界
+		String BOUNDARY = "-----------" + System.currentTimeMillis();
+		con.setRequestProperty("Content-Type", "multipart/form-data;boundary =" + BOUNDARY);
+		
+		StringBuilder sb = new StringBuilder();
+		sb.append("--");
+		sb.append(BOUNDARY);
+		sb.append("\r\n");
+		sb.append("Content-Disposition: form-data;name=\"file\";filename=\"" + file.getName() + "\"\r\n");
+		sb.append("Content-Type:application/octet-stream\r\n\r\n");
+
+		byte[] head = sb.toString().getBytes("utf-8");
+
+		//获得输出流
+		OutputStream out = new DataOutputStream(con.getOutputStream());
+		//输出表头
+		out.write(head);
+
+		//文件正文部分
+		//把文件已流文件的方式 推入到url中
+		DataInputStream in = new DataInputStream(new FileInputStream(file));
+		int bytes = 0;
+		byte[] bufferOut = new byte[1024];
+		while ((bytes = in.read(bufferOut)) != -1) {
+			out.write(bufferOut, 0, bytes);
+		}
+		in.close();
+
+		//结尾部分
+		byte[] foot = ("\r\n--" + BOUNDARY + "--\r\n").getBytes("utf-8");//定义最后数据分隔线
+
+		out.write(foot);
+		out.flush();
+		out.close();
+
+		StringBuffer buffer = new StringBuffer();
+		BufferedReader reader = null;
+		String result = null;
+		try {
+			//定义BufferedReader输入流来读取URL的响应
+			reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+			String line = null;
+			while ((line = reader.readLine()) != null) {
+				buffer.append(line);
+			}
+			if (result == null) {
+				result = buffer.toString();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (reader != null) {
+				reader.close();
+			}
+		}
+
+		JSONObject jsonObj = JSONObject.fromObject(result);
+		System.out.println(jsonObj);
+		String typeName = "url";
+		
+		String getUrl = jsonObj.getString(typeName);
+		return getUrl;
+	
+	}
+	/*
+	 * 永久文件上传
 	 */
 	public static String uploadForever(String filePath,String accessToken,String type) throws IOException{
 		File file = new File(filePath);
@@ -385,16 +469,27 @@ public class WeixinUtil {
 		button21.setType("click");
 		button21.setKey("21_qiandao");
 		
-		//ClickButton button22 = new ClickButton();
-		//button22.setName("扫码");
-		//button22.setType("click");
-		//button22.setKey("31_saoma");
+		ClickButton button31 = new ClickButton();
+		button31.setName("随机消息");
+		button31.setType("click");
+		button31.setKey("31_matchMessage");
 		
-		//Button button = new Button();
-		//button.setName("菜单");
-		//button.setSub_button(new Button[]{button21,button22});
+		ClickButton button32 = new ClickButton();
+		button32.setName("随机图片");
+		button32.setType("click");
+		button32.setKey("31_matchImage");
 		
-		menu.setButton(new Button[]{button11,button21});
+		ClickButton button33 = new ClickButton();
+		button33.setName("随机语音");
+		button33.setType("click");
+		button33.setKey("31_matchVoice");
+		
+		
+		Button button = new Button();
+		button.setName("随机配对");
+		button.setSub_button(new Button[]{button31,button32,button33});
+		
+		menu.setButton(new Button[]{button11,button21,button});
 		return menu;
 	}
 	/*
