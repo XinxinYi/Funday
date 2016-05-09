@@ -58,13 +58,26 @@ public class MatchData {
     public void insertMatchUser(MatchUser matchUser){  	
     	//默认最初均未配对
     	matchUser.setIfMatch(false);
-    	String insert = "insert into "+ TABLE_NAME + " values('"+matchUser.getOpenid()+"','"+matchUser.getMessage()+"','"+matchUser.getToOpenid()+"','"+matchUser.isIfMatch() + "')";
+    	String insert = "insert into "+ TABLE_NAME + " values('"+matchUser.getOpenid()+"','"+matchUser.getMessage()+"','"+matchUser.getToOpenid()+"','"+matchUser.isIfMatch()  +"','"+matchUser.isInMatch() +"')";
+    	String select = "select * from " + TABLE_NAME + " where openid = '" + matchUser.getOpenid() + "'";
+    	String update = "UPDATE "+ TABLE_NAME + " set toOpenid='" +null+"',ifMatch ='false',inMatch ='true' where openid='" + matchUser.getOpenid() + "'";
     	
-    	System.out.println(insert);
     	try {	
 			this.connSQL();
 			stmt = conn.createStatement();
-			stmt.executeUpdate(insert);
+			
+			ResultSet rs = stmt.executeQuery(select);
+			System.out.println(rs.next());
+			if(!rs.next()){	
+				System.out.println("不存在该用户！！！");
+				stmt.executeUpdate(insert);
+				System.out.println(insert);
+			}else{
+				System.out.println("存在该用户！！！");
+				stmt.executeUpdate(update);
+				System.out.println(update);
+			}
+			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -116,7 +129,7 @@ public class MatchData {
 				matchUser.setMessage(rs.getString("message"));
 				matchUser.setToOpenid(rs.getString("toOpenid"));
 				matchUser.setIfMatch(rs.getBoolean("ifMatch"));
-				
+				matchUser.setInMatch(rs.getBoolean("inMatch"));
 			}
 			
 		} catch (SQLException e) {
@@ -125,6 +138,34 @@ public class MatchData {
 		} 
     	this.deconnSQL();
     	return matchUser;
+    }
+    //开启某一个用户match状态
+    public void openMatch(String openId){
+    	String update = "UPDATE "+ TABLE_NAME + " set inMatch='true' where openid='" + openId + "'";
+    	System.out.println(update);
+    	try {	
+			this.connSQL();
+			stmt = conn.createStatement();
+			stmt.executeUpdate(update);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+    	this.deconnSQL();
+    }
+    //关闭某一个用户match状态
+    public void closeMatch(String openId){
+    	String update = "UPDATE "+ TABLE_NAME + " set inMatch='false' where openid='" + openId + "'";
+    	System.out.println(update);
+    	try {	
+			this.connSQL();
+			stmt = conn.createStatement();
+			stmt.executeUpdate(update);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+    	this.deconnSQL();
     }
     
    //删除配对信息

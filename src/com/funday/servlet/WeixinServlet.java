@@ -30,7 +30,6 @@ import net.sf.json.JSONObject;
 
 
 public class WeixinServlet extends HttpServlet{
-	private static boolean inMatch ;
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 		throws ServletException, IOException{
@@ -61,10 +60,13 @@ public class WeixinServlet extends HttpServlet{
 			String content = map.get("Content");
 			String msgId = map.get("MsgId ");
 			
-			System.out.println("最初进入：" + inMatch);
 			String message = null;
-			if(!inMatch){
-
+			
+			MatchUser matchUser = new MatchUser();
+			MatchData matchData = new MatchData();
+			matchUser = matchData.selectMatchUser(fromUserName);
+			if(!matchUser.isInMatch()){
+			
 			if(MessageUtil.MESSAGE_TEXT.equals(msgType)){				
 				//message = MessageUtil.initText(toUserName, fromUserName, MessageUtil.sorryText());				
 				if("优惠券".equals(content)){
@@ -137,8 +139,13 @@ public class WeixinServlet extends HttpServlet{
 					}else if(key.equals("31_matchMessage")){
 						String mess = "开启你的随机配对聊天之旅啦！";
 						message = MessageUtil.initText(toUserName, fromUserName, mess);
-						inMatch = true;
-						System.out.println("点击按钮之后：" + inMatch);
+						
+						matchUser.setInMatch(true);
+						matchUser.setOpenid(fromUserName);						
+						matchData.insertMatchUser(matchUser);						
+						matchData.openMatch(fromUserName);
+						
+						System.out.println("用户状态：" + matchData.selectMatchUser(fromUserName).isInMatch());
 						
 					}
 				}else if(MessageUtil.MESSAGE_UNSUBSCRIBE.equals(eventType)){
@@ -162,22 +169,26 @@ public class WeixinServlet extends HttpServlet{
 			else{
 				System.out.println("现在已经进入Match流程！");
 				System.out.println(content);
-				MatchData matchData = new MatchData();
-				MatchUser matchUser = new MatchUser();
-				
-				if("退出".equals(content)){
-					inMatch = false;
-					matchData.deleteMatchUser(fromUserName);	
-					String result = "您已经退出随机配对聊天了！";
+				//MatchData matchData = new MatchData();
+				//MatchUser matchUser = new MatchUser();
+				String result = null;
+				//进入配对流程，则其他操作均不接受，只能发送文本消息
+				if(!MessageUtil.MESSAGE_TEXT.equals(msgType)){
+					result = "请发送您的配对消息！";
+					message = MessageUtil.initText(toUserName, fromUserName,result);
+				}else if("退出".equals(content)){
+					matchData.closeMatch(fromUserName);
+					matchData.deleteMatchUser(fromUserName);						
+					result = "您已经退出随机配对聊天了！";
 					message = MessageUtil.initText(toUserName, fromUserName,result);
 					
 				}else if("清空".equals(content)){
 					matchData.setMatchFalse();
-					String result = "清空所有配对状态！";
+					result = "清空所有配对状态！";
 					message = MessageUtil.initText(toUserName, fromUserName,result);
 				}else if("我的消息".equals(content)){
 					MatchUser matchUser22 = matchData.selectMatchUser(fromUserName);
-					String result = "我发送的消息是：" + matchUser22.getMessage();
+					result = "我发送的消息是：" + matchUser22.getMessage();
 					message = MessageUtil.initText(toUserName, fromUserName,result);
 				}
 				else{
@@ -185,9 +196,10 @@ public class WeixinServlet extends HttpServlet{
 						matchData.updateMessage(fromUserName, content.substring(3));
 						System.out.println("替换的message为：" + content.substring(3));																		
 					}else{
-						matchUser.setOpenid(fromUserName);
-						matchUser.setMessage(content);
-						matchData.insertMatchUser(matchUser);												
+						//matchUser.setOpenid(fromUserName);
+						//matchUser.setMessage(content);
+						//matchUser.setInMatch(true);
+						matchData.updateMessage(fromUserName, content);											
 					}
 						String toOpenid = matchData.matchUser(fromUserName);
 						System.out.println("配对的用户id:" + toOpenid);
@@ -206,7 +218,7 @@ public class WeixinServlet extends HttpServlet{
 						}
 						MatchUser muser2 = new MatchUser();
 						muser2 = matchData.selectMatchUser(toOpenid);
-						String result = "Ta是一位"+sex22+",昵称是"+nickname2+",现在在"+city2+".\n"+"Ta说："+muser2.getMessage();
+						result = "Ta是一位"+sex22+",昵称是"+nickname2+",现在在"+city2+".\n"+"Ta说："+muser2.getMessage();
 						message = MessageUtil.initText(toUserName, fromUserName,result);											
 				}					
 				out.print(message);	

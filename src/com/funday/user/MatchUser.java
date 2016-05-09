@@ -5,6 +5,7 @@ public class MatchUser {
 	private String message;
 	private String toOpenid;
 	private boolean ifMatch;
+	private boolean inMatch;
 	public String getOpenid() {
 		return openid;
 	}
@@ -28,6 +29,12 @@ public class MatchUser {
 	}
 	public void setIfMatch(boolean ifMatch) {
 		this.ifMatch = ifMatch;
+	}
+	public boolean isInMatch() {
+		return inMatch;
+	}
+	public void setInMatch(boolean inMatch) {
+		this.inMatch = inMatch;
 	}
 
 }
