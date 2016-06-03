@@ -59,18 +59,40 @@ public class WeixinServlet extends HttpServlet{
 			String msgType = map.get("MsgType");
 			String content = map.get("Content");
 			String msgId = map.get("MsgId ");
-			
+			String eventType = map.get("Event");
 			String message = null;
 			
 			MatchUser matchUser = new MatchUser();
 			MatchData matchData = new MatchData();
 			matchUser = matchData.selectMatchUser(fromUserName);
-			if(!matchUser.isInMatch()){
-			
+			String toOpenid = null;
+			SqlConn sc = new SqlConn();	
+			//判断该用户是否处于聊天中
+			if(!matchUser.isInMatch()){	
 			if(MessageUtil.MESSAGE_TEXT.equals(msgType)){				
 				//message = MessageUtil.initText(toUserName, fromUserName, MessageUtil.sorryText());				
 				if("优惠券".equals(content)){
 					message = MessageUtil.initText(toUserName, fromUserName, CouponUtil.getCoupon());
+				}else if("测试客服接口".equals(content)){
+					for(int i=0;i<500002;i++){
+					String mess1 = MessageUtil.getCusContent(fromUserName, "测试"+i+"次");
+					WeixinUtil.customSend(fromUserName, mess1);
+					System.out.println("测试了："+i+"次");
+					try{
+					    Thread thread = Thread.currentThread();
+					    thread.sleep(150);//暂停1.5秒后程序继续执行
+					}catch (InterruptedException e) {
+					    // TODO Auto-generated catch block
+					    e.printStackTrace();
+					}
+					}
+				}
+				
+				else if("不再聊天".equals(content)){
+					message = MessageUtil.initText(toUserName, fromUserName, "系统消息\n不再聊天了，想回来可点击‘开启聊天’");
+					toOpenid = matchData.selectMatchUser(fromUserName).getToOpenid();
+					matchData.cleanMatch(fromUserName, toOpenid);
+					matchData.deleteMatchUser(fromUserName);
 				}else{									
 					Semantic smt = SemanticUtil.makeSemantic(content, fromUserName);
 					String smtStr = JSONObject.fromObject(smt).toString();								
@@ -83,25 +105,28 @@ public class WeixinServlet extends HttpServlet{
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-				}
-				
-			}else if(MessageUtil.MESSAGE_EVENT.equals(msgType)){
-				String eventType = map.get("Event");				
+				}				
+			}else if(MessageUtil.MESSAGE_EVENT.equals(msgType)){								
 				if(MessageUtil.MESSAGE_SUBSCRIBE.equals(eventType)){					
 					String nickName = WeixinUtil.getUser(fromUserName).getNickname();
 					message = MessageUtil.initText(toUserName, fromUserName, MessageUtil.subscribeText(nickName));						 
 					User user = new User();
 					user = WeixinUtil.getUser(fromUserName);											
-					SqlConn sc = new SqlConn();
 					sc.insertUser(user);
+					//matchData.insertMatchUser(fromUserName);
 					
+				}else if(MessageUtil.MESSAGE_UNSUBSCRIBE.equals(eventType)){
+					//清除用户表中的所有信息
+					sc.deleteUser(fromUserName);
+					
+					//清除配对表中的配对信息
+					toOpenid = matchData.selectMatchUser(fromUserName).getToOpenid();
+					matchData.cleanMatch(fromUserName, toOpenid);
+					matchData.deleteMatchUser(fromUserName);
 				}else if(MessageUtil.MESSAGE_CLICK.equals(eventType)){
 					String key = map.get("EventKey");
 					if(key.equals("21_qiandao")){
-						//message = MessageUtil.initText(toUserName, fromUserName, MessageUtil.menuText());
-						User user = new User();
-						SqlConn sc = new SqlConn();
-						
+						User user = new User();						
 						user = sc.selectUser(fromUserName);
 						//更新用户头像及昵称，用户可能随时修改
 						user.setHeadimgurl(WeixinUtil.getUser(fromUserName).getHeadimgurl());
@@ -129,28 +154,62 @@ public class WeixinServlet extends HttpServlet{
 							//System.out.println("本次points=" + WeixinUtil.getPoints(user.getSignCount()));
 							sc.updateUser(user);
 							message = MessageUtil.signNewsMessage(toUserName, fromUserName);
-						}							
+						}													
 						
-						
-					}else if(key.equals("11_getone")){
+					}
+					//获取搞笑集锦
+					else if(key.equals("11_getone")){
 						//message = MessageUtil.initText(toUserName, fromUserName, "扫码成功");						
 						message = MessageUtil.getOneNews(toUserName, fromUserName);
 						//System.out.println(message);
-					}else if(key.equals("31_matchMessage")){
-						String mess = "开启你的随机配对聊天之旅啦！";
-						message = MessageUtil.initText(toUserName, fromUserName, mess);
-						
+					}else if(key.equals("31_matchOpen")){						
 						matchUser.setInMatch(true);
 						matchUser.setOpenid(fromUserName);						
-						matchData.insertMatchUser(matchUser);						
-						matchData.openMatch(fromUserName);
+						//在配对表中插入用户，以防去掉聊天功能后，再加入的情况
+						matchData.insertMatchUser(fromUserName);						
 						
-						System.out.println("用户状态：" + matchData.selectMatchUser(fromUserName).isInMatch());
+						toOpenid = matchData.selectMatchUser(fromUserName).getToOpenid();
+						System.out.println(toOpenid.length());
+						//进行配对,数据库中应将配对双方的数据均修改
+						if(toOpenid.length() == 0){
+							toOpenid = matchData.matchUser(fromUserName);
+							if(toOpenid.length() == 0){
+								toOpenid = matchData.matchUser(fromUserName);
+							}
+							if(toOpenid.length() == 0){
+								String mess = "对接失败！要不再来一次吧！";
+								message = MessageUtil.initText(toUserName, fromUserName, mess);
+							}
+							
+							String mess1 = MessageUtil.getCusContent(toOpenid, "系统消息\n聊天开始，现在开始您发送的任何文字消息将直接推送给Ta");
+							WeixinUtil.customSend(toOpenid, mess1);
+							String mess = "系统消息\n聊天开始，现在开始您发送的任何文字消息将直接推送给对方！";
+							message = MessageUtil.initText(toUserName, fromUserName, mess);
+						}else{
+							String mess1 = MessageUtil.getCusContent(fromUserName, "系统消息\n聊天开始，现在开始您发送的任何文字消息将直接推送给Ta");
+							WeixinUtil.customSend(fromUserName, mess1);
+							String mess = "系统消息\n聊天开始，现在开始您发送的任何文字消息将直接推送给Ta";
+							message = MessageUtil.initText(toUserName, fromUserName, mess);
+						}
+						matchUser.setToOpenid(toOpenid);
+						//更新配对双方的数据
+						matchData.updateMatchUser(fromUserName, toOpenid);
+						matchData.openMatch(fromUserName,toOpenid);
+						/*
+						//给配对双方分别发送配对信息
+						User user1 = sc.selectUser(fromUserName);
+						User user2 = sc.selectUser(toOpenid);
+			
+						String mess1 = MessageUtil.getCusContent(fromUserName, "系统消息\n"+user2.getNickname()+"正在和你聊天，Ta来自"+user2.getCity());
+						WeixinUtil.customSend(fromUserName, mess1);
+						String mess2 = MessageUtil.getCusContent(toOpenid, "系统消息\n"+user1.getNickname()+"正在和你聊天，Ta来自"+user1.getCity());
+						WeixinUtil.customSend(toOpenid, mess2);											
+						*/												
 						
+					}else{
+						message = MessageUtil.initText(toUserName, fromUserName, MessageUtil.helpText());
 					}
-				}else if(MessageUtil.MESSAGE_UNSUBSCRIBE.equals(eventType)){
-					SqlConn sc = new SqlConn();
-					sc.deleteUser(fromUserName);
+					
 				}else if(MessageUtil.MESSAGE_VIEW.equals(eventType)){
 					String url = map.get("EventKey");
 					message = MessageUtil.initText(toUserName, fromUserName, url);
@@ -162,67 +221,70 @@ public class WeixinServlet extends HttpServlet{
 				String Label = map.get("Label");
 				message = MessageUtil.initText(toUserName, fromUserName,Label);
 			}
-			
-			//System.out.println(message);
+			//除了以上情况，用户的其他动作则不回复任何。
+			else{
+				message = "";
+			}
 			out.print(message);
 			}
 			else{
-				System.out.println("现在已经进入Match流程！");
+				System.out.println("现在已经进入对话流程！");
 				System.out.println(content);
 				//MatchData matchData = new MatchData();
 				//MatchUser matchUser = new MatchUser();
-				String result = null;
-				//进入配对流程，则其他操作均不接受，只能发送文本消息
-				if(!MessageUtil.MESSAGE_TEXT.equals(msgType)){
-					result = "请发送您的配对消息！";
-					message = MessageUtil.initText(toUserName, fromUserName,result);
-				}else if("退出".equals(content)){
-					matchData.closeMatch(fromUserName);
-					matchData.deleteMatchUser(fromUserName);						
-					result = "您已经退出随机配对聊天了！";
-					message = MessageUtil.initText(toUserName, fromUserName,result);
-					
-				}else if("清空".equals(content)){
-					matchData.setMatchFalse();
-					result = "清空所有配对状态！";
-					message = MessageUtil.initText(toUserName, fromUserName,result);
-				}else if("我的消息".equals(content)){
-					MatchUser matchUser22 = matchData.selectMatchUser(fromUserName);
-					result = "我发送的消息是：" + matchUser22.getMessage();
-					message = MessageUtil.initText(toUserName, fromUserName,result);
-				}
-				else{
-					if(content.indexOf("替换") >= 0){
-						matchData.updateMessage(fromUserName, content.substring(3));
-						System.out.println("替换的message为：" + content.substring(3));																		
+				String result = "";
+				//配对对方的openid
+				toOpenid = matchData.selectMatchUser(fromUserName).getToOpenid();
+				if(MessageUtil.MESSAGE_CLICK.equals(eventType)){
+					String key = map.get("EventKey");
+					if(key.equals("31_matchClose")){
+						matchData.closeMatch(fromUserName,toOpenid);
+						//matchData.deleteMatchUser(fromUserName);						
+						result = "系统消息\n您已经退出随机配对聊天了！";
+						message = MessageUtil.initText(toUserName, fromUserName,result);
+						String toMess = MessageUtil.getCusContent(toOpenid, "系统消息\n对方已退出随机配对聊天了！");
+						WeixinUtil.customSend(toOpenid, toMess);
+					}else if(key.equals("31_matchChange")){
+						matchData.cleanMatch(fromUserName, toOpenid);
+						result = "系统消息\n点击‘开启聊天’重新开始一段旅程吧！";
+						message = MessageUtil.initText(toUserName, fromUserName,result);
+						String toMess = MessageUtil.getCusContent(toOpenid, "系统消息\n对方已退出随机配对聊天了！");
+						WeixinUtil.customSend(toOpenid, toMess);
 					}else{
-						//matchUser.setOpenid(fromUserName);
-						//matchUser.setMessage(content);
-						//matchUser.setInMatch(true);
-						matchData.updateMessage(fromUserName, content);											
+						result = "系统消息\n开始聊天了就专心的嘛！";
+						message = MessageUtil.initText(toUserName, fromUserName,result);
+					}				
+				}
+				//聊天过程中出现取消关注的情况
+				else if(MessageUtil.MESSAGE_EVENT.equals(msgType)){
+					if(MessageUtil.MESSAGE_UNSUBSCRIBE.equals(eventType)){
+						//清除用户表中的所有信息
+						sc.deleteUser(fromUserName);						
+						//清除配对表中的配对信息
+						matchData.cleanMatch(fromUserName, toOpenid);
+						matchData.deleteMatchUser(fromUserName);
+						//通知对方用户，已退出聊天
+						String toMess = MessageUtil.getCusContent(toOpenid, "系统消息\n对方已退出随机配对聊天了！");
+						WeixinUtil.customSend(toOpenid, toMess);
 					}
-						String toOpenid = matchData.matchUser(fromUserName);
-						System.out.println("配对的用户id:" + toOpenid);
-						matchData.updateMatchUser(fromUserName, toOpenid);
-						SqlConn sc = new SqlConn();
-						User user2 = new User();
-						user2 = sc.selectUser(toOpenid);
-						String nickname2 = user2.getNickname();
-						String city2 = user2.getCity();
-						int sex2 = user2.getSex();
-						String sex22 = null;
-						if(sex2==1) {
-							sex22 = "男士";
-						}else {
-							sex22 = "女士";
-						}
-						MatchUser muser2 = new MatchUser();
-						muser2 = matchData.selectMatchUser(toOpenid);
-						result = "Ta是一位"+sex22+",昵称是"+nickname2+",现在在"+city2+".\n"+"Ta说："+muser2.getMessage();
-						message = MessageUtil.initText(toUserName, fromUserName,result);											
+				}
+				//进入配对流程，则其他操作均不接受，只能发送文本消息
+				else if(!MessageUtil.MESSAGE_TEXT.equals(msgType)){
+					result = "系统消息\n暂不支持文字以外的消息形式！";
+					message = MessageUtil.initText(toUserName, fromUserName,result);
+				}else{					
+						matchData.updateMessage(fromUserName, content);											
+						matchUser = matchData.selectMatchUser(fromUserName);						
+						//message = MessageUtil.initText(toUserName, fromUserName, content);
+						MatchUser toUser = matchData.selectMatchUser(matchUser.getToOpenid());
+						String response = toUser.getMessage();
+						//message = MessageUtil.initText(toUserName, matchUser.getToOpenid(),content);							 						
+						String toMess = MessageUtil.getCusContent(matchUser.getToOpenid(), content);
+						WeixinUtil.customSend(matchUser.getToOpenid(), toMess);
+						message = "";
+																	
 				}					
-				out.print(message);	
-												
+				out.print(message);													
 			}
 		}catch(DocumentException e){
 			e.printStackTrace();

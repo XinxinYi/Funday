@@ -60,6 +60,8 @@ public class WeixinUtil {
 	private static final String UPLOAD_NEWS_URL = "https://api.weixin.qq.com/cgi-bin/media/uploadnews?access_token=ACCESS_TOKEN";
 	private static final String SENDTOALL_URL = "https://api.weixin.qq.com/cgi-bin/message/mass/sendall?access_token=ACCESS_TOKEN";
 	
+	private static final String CUSTOM_SEND_URL = "https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token=ACCESS_TOKEN";
+	
 	public static JSONObject doGetStr(String url) throws ClientProtocolException, IOException{
 		DefaultHttpClient httpClient = new DefaultHttpClient();
 		HttpGet httpGet = new HttpGet(url);
@@ -460,7 +462,7 @@ public class WeixinUtil {
 		Menu menu = new Menu();
 		
 		ClickButton button11 = new ClickButton();
-		button11.setName("每日新闻");
+		button11.setName("搞笑集锦");
 		button11.setType("click");
 		button11.setKey("11_getone");;
 		
@@ -470,26 +472,26 @@ public class WeixinUtil {
 		button21.setKey("21_qiandao");
 		
 		ClickButton button31 = new ClickButton();
-		button31.setName("随机消息");
+		button31.setName("开启聊天");
 		button31.setType("click");
-		button31.setKey("31_matchMessage");
+		button31.setKey("31_matchOpen");
 		
 		ClickButton button32 = new ClickButton();
-		button32.setName("随机图片");
+		button32.setName("下次再聊");
 		button32.setType("click");
-		button32.setKey("31_matchImage");
+		button32.setKey("31_matchClose");
 		
 		ClickButton button33 = new ClickButton();
-		button33.setName("随机语音");
+		button33.setName("换个试试");
 		button33.setType("click");
-		button33.setKey("31_matchVoice");
+		button33.setKey("31_matchChange");
 		
 		
 		Button button = new Button();
-		button.setName("随机配对");
+		button.setName("随机聊天");
 		button.setSub_button(new Button[]{button31,button32,button33});
 		
-		menu.setButton(new Button[]{button11,button21,button});
+		menu.setButton(new Button[]{button,button11,button21});
 		return menu;
 	}
 	/*
@@ -600,5 +602,18 @@ public class WeixinUtil {
 		return points;
 	}
 	
-
+	
+	public static void customSend(String fromUserName,String cusContent)throws ClientProtocolException, IOException{		
+		try{	
+			String token = getExitAccessToken().getToken();				
+			String url = WeixinUtil.CUSTOM_SEND_URL.replace("ACCESS_TOKEN", token).replace("OPENID",fromUserName);
+			JSONObject jsonObject = WeixinUtil.doPostStr(url, cusContent);
+			System.out.println(jsonObject.getString("errcode"));
+			 	
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		
+	}
+	
 }

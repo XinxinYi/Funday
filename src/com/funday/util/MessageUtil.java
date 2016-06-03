@@ -54,7 +54,7 @@ public class MessageUtil {
 	private static final String SIGN_URL = "http://tongyuan.tunnel.qydev.com/Funday/SignCount.jsp";
 	private static final String ARTICLE_URL = "http://tongyuan.tunnel.qydev.com/Funday/Article.jsp";
 	/*
-	 * xmlתΪmap����
+	 * xml转为map集合
 	 * @param request
 	 * @return
 	 * @throws IOException
@@ -80,7 +80,7 @@ public class MessageUtil {
 	}
 	
 	/*
-	 * ���ı�����ת��Ϊxml
+	 * 将文本对象转换为xml
 	 */
 	public static String textMessageToXml(TextMessage textMessage){
 		XStream xstream = new XStream();
@@ -89,7 +89,7 @@ public class MessageUtil {
 		return xstream.toXML(textMessage);
 	}
 	/*
-	 * ͼ����Ϣת��ΪXML	
+	 * 图文消息转换为XML	
 	 */
 	public static String newsMessageToXml(NewsMessage newsMessage){
 		XStream xstream = new XStream();
@@ -98,7 +98,7 @@ public class MessageUtil {
 		return xstream.toXML(newsMessage);
 	}
 	/* 
-	 * ͼƬ��Ϣת��ΪXML	
+	 * 图片消息转换为XML	
 	 */
 	public static String imageMessageToXml(ImageMessage imageMessage){
 		XStream xstream = new XStream();
@@ -107,7 +107,7 @@ public class MessageUtil {
 		return xstream.toXML(imageMessage);
 	}
 	/* 
-	 * ������Ϣת��ΪXML	
+	 * 音乐消息转换为XML	
 	 */
 	public static String musicMessageToXml(MusicMessage musicMessage){
 		XStream xstream = new XStream();
@@ -116,7 +116,7 @@ public class MessageUtil {
 		return xstream.toXML(musicMessage);
 	}
 	/*
-	 * ƴ���ı���Ϣ
+	 * 拼接文本消息
 	 */
 	public static String initText(String toUserName,String fromUserName,String content){
 		TextMessage text = new TextMessage();
@@ -130,27 +130,34 @@ public class MessageUtil {
 		
 	}
 	/*
-	 * ��עʱ�ظ����ı���Ϣ
+	 * 关注时回复的文本消息
 	 */
 	public static String subscribeText(String nickName){
 		StringBuffer sb = new StringBuffer();
 		sb.append(nickName);
-		sb.append("����ϲ�������ҵ���֯����\n");
-		sb.append("���������뿴�Ķ��ӡ�ͼƬ����Ƶ������ÿ��Ц����������");
+		sb.append("，欢迎关注我们的公众号\n");
+		sb.append("❤想找个人聊聊天，可点击‘随机聊天’->‘开启聊天’\n");
+		sb.append("❤聊累了想歇歇，可点击‘随机聊天’->‘下次再聊’，下次还是Ta\n");
+		sb.append("❤口味不太对，可点击‘随机聊天’->‘关闭聊天’，再来一次全新的体验\n");
+		sb.append("❤聊天之外，点击‘搞笑集锦’，将为您推送最好玩最搞笑的文章\n");
+		sb.append("❤每天来‘签到’，攒攒积分，排名较高的说不定会有惊喜哟！\n");
+		sb.append("☆如果不想再聊天了，点击‘关闭聊天’后直接回复‘不再聊天’即可");
 		return sb.toString();
 	}
 
 	/*
-	 * ���˵� 
+	 * 帮助 
 	 */
-	public static String sorryText(){
+	public static String helpText(){
 		StringBuffer sb = new StringBuffer();
-		sb.append("��Ǹ��'��Ц�ճ�'���ڽ�����");
-		sb.append("");
+		sb.append("❤想找个人聊聊天，可点击‘随机聊天’->‘开启聊天’\n");
+		sb.append("❤聊天之外，点击‘搞笑集锦’，将为您推送最好玩最搞笑的文章\n");
+		sb.append("❤每天来‘签到’，攒攒积分，排名较高的说不定会有惊喜哟！\n");
+		sb.append("☆如果不想再聊天了，直接回复‘不再聊天’即可");
 		return sb.toString();
 	}
 	/*
-	 * �����Цһ�������ȡͼ����Ϣ
+	 * 点击搞笑一则，随机获取图文消息
 	 */
 	public static String getOneNews(String toUserName,String fromUserName) throws IOException{
 		String message = null;
@@ -181,7 +188,7 @@ public class MessageUtil {
 		return message;
 	}
 	/*
-	 * ǩ��ʱ���ص�ͼ����Ϣ
+	 * 签到时返回的图文消息
 	 */
 	public static String signNewsMessage(String toUserName,String fromUserName){
 		String message = null;
@@ -189,8 +196,8 @@ public class MessageUtil {
 		NewsMessage newsMessage = new NewsMessage();
 
 		Article article = new Article();
-		article.setTitle("�򿨳ɹ���");
-		article.setDescription("���������ң�������");
+		article.setTitle("打卡成功！");
+		article.setDescription("↓↓↓戳我，就现在");
 		article.setPicUrl("http://imgsrc.baidu.com/forum/w%3D580/sign=5fac7d37253fb80e0cd161df06d12ffb/bf19852397dda144f3711db4b6b7d0a20df4868e.jpg");				
 		article.setUrl(SIGN_URL+"?openid="+fromUserName);
 		//article.setUrl("H7t11zWvCnnGk6Cg-v-IO2JfBwEAYWGLaNUWssLNPq1YcDts5V5SGwM9-q01SIgP");
@@ -209,7 +216,7 @@ public class MessageUtil {
 		return message;
 	}
 	/*
-	 * ͼƬ��Ϣ
+	 * 图片消息
 	 */
 	public static String initImageMessage(String toUserName,String fromUserName){
 		String message = null;
@@ -227,7 +234,7 @@ public class MessageUtil {
 		
 	}
 	/*
-	 * ��Ƶ��������Ϣ
+	 * 音频、音乐消息
 	 */
 	public static String initMusicMessage(String toUserName,String fromUserName){
 		String message = null;
@@ -250,7 +257,7 @@ public class MessageUtil {
 		
 	}
 	/*
-	 * �Զ�Ⱥ����ͼ����Ϣ
+	 * 自动群发的图文消息
 	 */
 	public static ArticleTextArr makeNews(Items[] items,String imgId) throws IOException{	
 		ArticleTextArr atArr = new ArticleTextArr();
@@ -262,7 +269,7 @@ public class MessageUtil {
 		for(int i=0;i<3;i++){
 			if(i>3) break;
 			ArticleText at = new ArticleText();
-			at.setAuthor("С��");
+			at.setAuthor("小二");
 			at.setContent(items[i].getContent());
 			//String uploadImgId = SpamUtil.uploadImg(items[i].getThumbnail(), accessToken);
 			at.setThumb_media_id(imgId);
@@ -277,7 +284,7 @@ public class MessageUtil {
 
 	}
 	/*
-	 * ���ݷ������Ⱥ����ƴ��POSTȺ���ı���Ϣ
+	 * 根据分组进行群发，拼接POST群发文本消息
 	 */
 	public static TextSpam makeSpamText(String str){
 		TextSpam ts = new TextSpam();
@@ -291,7 +298,7 @@ public class MessageUtil {
 		return ts;
 	}
 	/*
-	 * ���ݷ������Ⱥ����ƴ��POSTȺ��ͼ����Ϣ
+	 * 根据分组进行群发，拼接POST群发图文消息
 	 */
 	public static NewsSpam makeSpamNews(String media_id){
 		if(media_id.length() > 5){
@@ -309,7 +316,11 @@ public class MessageUtil {
 		}
 		
 	}
+	//封装客服消息
+	public static String getCusContent(String fromUserName,String text){
+		String content = "{\"touser\":\"" + fromUserName + "\",\"msgtype\":\"text\",\"text\":{ \"content\": \"" + text + "\"}}";
+		return content;
+	}
 	
-
 	
 }

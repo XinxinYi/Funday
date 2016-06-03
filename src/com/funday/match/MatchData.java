@@ -54,20 +54,17 @@ public class MatchData {
         }  
      }
      	  
-     //新增一个用户，用户启动并发送一条有效消息
-    public void insertMatchUser(MatchUser matchUser){  	
+     //用户关注时调用
+    public void insertMatchUser(String openid){  	
     	//默认最初均未配对
-    	matchUser.setIfMatch(false);
-    	String insert = "insert into "+ TABLE_NAME + " values('"+matchUser.getOpenid()+"','"+matchUser.getMessage()+"','"+matchUser.getToOpenid()+"','"+matchUser.isIfMatch()  +"','"+matchUser.isInMatch() +"')";
-    	String select = "select * from " + TABLE_NAME + " where openid = '" + matchUser.getOpenid() + "'";
-    	String update = "UPDATE "+ TABLE_NAME + " set toOpenid='" +null+"',ifMatch ='false',inMatch ='true' where openid='" + matchUser.getOpenid() + "'";
+    	String insert = "insert into "+ TABLE_NAME + " values('"+openid+"','','','false','false')";
+    	String select = "select * from " + TABLE_NAME + " where openid = '" + openid + "'";
+    	String update = "UPDATE "+ TABLE_NAME + " set toOpenid='',ifMatch ='false',inMatch ='true' where openid='" + openid + "'";
     	
     	try {	
 			this.connSQL();
 			stmt = conn.createStatement();
-			
-			ResultSet rs = stmt.executeQuery(select);
-			System.out.println(rs.next());
+			ResultSet rs = stmt.executeQuery(select);			
 			if(!rs.next()){	
 				System.out.println("不存在该用户！！！");
 				stmt.executeUpdate(insert);
@@ -83,12 +80,14 @@ public class MatchData {
 			e.printStackTrace();
 		}       	                 
     	this.deconnSQL(); 
-    }  
+    }    
+   
+    
     //更新用户信息，用户匹配成功时调用,这里应该更新两个用户的配对信息
     public void updateMatchUser(String openid,String toOpenid){
     	
-    	String update1 = "UPDATE "+ TABLE_NAME + " set toOpenid='" +toOpenid+"',ifMatch ='true' where openid='" + openid + "'";
-    	String update2 = "UPDATE "+ TABLE_NAME + " set toOpenid='" +openid+"',ifMatch ='true' where openid='" + toOpenid + "'";
+    	String update1 = "UPDATE "+ TABLE_NAME + " set toOpenid='" +toOpenid+"',ifMatch ='true', inMatch ='true' where openid='" + openid + "'";
+    	String update2 = "UPDATE "+ TABLE_NAME + " set toOpenid='" +openid+"',ifMatch ='true', inMatch ='true' where openid='" + toOpenid + "'";
     	System.out.println(update1);
     	System.out.println(update2);
     	try {	
@@ -102,20 +101,7 @@ public class MatchData {
 		} 
     	this.deconnSQL();
     }
-    //更新配对消息
-    public void updateMessage(String openid,String message){
-    	String update = "UPDATE "+ TABLE_NAME + " set message='" +message+"' where openid='" + openid + "'";
-    	System.out.println(update);
-    	try {	
-			this.connSQL();
-			stmt = conn.createStatement();
-			stmt.executeUpdate(update);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} 
-    	this.deconnSQL();
-    }
+    
     //查找配对用户信息
     public MatchUser selectMatchUser(String openId){
     	String select = "select * from " + TABLE_NAME + " where openid = '" +openId + "'";
@@ -139,57 +125,49 @@ public class MatchData {
     	this.deconnSQL();
     	return matchUser;
     }
-    //开启某一个用户match状态
-    public void openMatch(String openId){
-    	String update = "UPDATE "+ TABLE_NAME + " set inMatch='true' where openid='" + openId + "'";
-    	System.out.println(update);
+    //开启某一对用户match状态
+    public void openMatch(String openid,String toOpenid){
+    	String update1 = "UPDATE "+ TABLE_NAME + " set inMatch='true' where openid='" + openid + "'";
+    	String update2 = "UPDATE "+ TABLE_NAME + " set inMatch='true' where openid='" + toOpenid + "'";
     	try {	
 			this.connSQL();
 			stmt = conn.createStatement();
-			stmt.executeUpdate(update);
+			stmt.executeUpdate(update1);
+			stmt.executeUpdate(update2);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
     	this.deconnSQL();
     }
-    //关闭某一个用户match状态
-    public void closeMatch(String openId){
-    	String update = "UPDATE "+ TABLE_NAME + " set inMatch='false' where openid='" + openId + "'";
-    	System.out.println(update);
+    //关闭某一对用户match状态
+    public void closeMatch(String openid,String toOpenid){
+    	String update1 = "UPDATE "+ TABLE_NAME + " set inMatch='false' where openid='" + openid + "'"; 
+    	String update2 = "UPDATE "+ TABLE_NAME + " set inMatch='false' where openid='" + toOpenid + "'"; 
     	try {	
 			this.connSQL();
 			stmt = conn.createStatement();
-			stmt.executeUpdate(update);
+			stmt.executeUpdate(update1);
+			stmt.executeUpdate(update2);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
     	this.deconnSQL();
-    }
+    }  
     
-   //删除配对信息
-    public void deleteMatchUser(String openId){
-    	String delete = "delete from " + TABLE_NAME + " where openid= '" + openId +"'";      	
-    	this.connSQL();		
-		try {
-			stmt = conn.createStatement();
-			stmt.executeUpdate(delete);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}		
-    	this.deconnSQL();
-    }
-    
-    //随机选择未配对用户，并返回openId
+    //随机选择未配对用户，并返回openId，已派出自己
     public String matchUser(String openid){
-    	String noMatch = "select * from " + TABLE_NAME + " where ifMatch = 'false' order by rand() limit 1";  	
+    	String noMatch = "select openid from " + TABLE_NAME + " where ifMatch = 'false' and openid <> '" + openid + "' order by rand() limit 1";  	
+    	//String noMatch = "select * from " + TABLE_NAME + " as t1 join (select openid from "+ TABLE_NAME + " where ifMatch ='false' and openid <> '"+openid+"') as t2 where t1.openid = t2.openid limit 1";
     	String toOpenid = null;
+    	System.out.println(noMatch);
     	try {	
 			this.connSQL();
 			stmt = conn.createStatement();
 			ResultSet rs = stmt.executeQuery(noMatch);
+			
+			System.out.println(noMatch);
 			while (rs.next()) {	
 				toOpenid = rs.getString("openid");
 			}
@@ -201,11 +179,46 @@ public class MatchData {
     	this.deconnSQL();
     	
     	return toOpenid;
+    }      
+    //清空双方的配对，重新配对时调用，某一用户取消关注时调用
+    public void cleanMatch(String openid,String toOpenid){
+    	System.out.println(toOpenid);
+    	String update1 = "UPDATE "+ TABLE_NAME + " set toOpenid='',message = '',inMatch='false', ifMatch ='false' where openid='" + openid + "'";
+    	String update2 = "UPDATE "+ TABLE_NAME + " set toOpenid='',message = '',inMatch='false', ifMatch ='false' where openid='" + toOpenid + "'";
+    	System.out.println("重新配对，应该清除所有消息");
+    	System.out.println(update1);
+    	System.out.println(update2);
+    	try {	
+			this.connSQL();
+			stmt = conn.createStatement();
+			stmt.executeUpdate(update1);
+			stmt.executeUpdate(update2);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+    	this.deconnSQL();
     }
+  //删除配对信息
+    public void deleteMatchUser(String openId){
+    	String delete = "delete from " + TABLE_NAME + " where openid= '" + openId +"'";      	
+    	this.connSQL();		
+		try {
+			stmt = conn.createStatement();
+			stmt.executeUpdate(delete);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
+    	this.deconnSQL();
+    } 
     
-   //
+    
+    //下面的方法暂时没什么用
+    
+    //将所有用户设置为未配对
     public void setMatchFalse(){
-    	String setMatch = "UPDATE "+ TABLE_NAME + " set ifMatch='false'";
+    	String setMatch = "UPDATE "+ TABLE_NAME + " set ifMatch='false', inMatch='false'";
     	try {	
 			this.connSQL();
 			stmt = conn.createStatement();
@@ -215,7 +228,37 @@ public class MatchData {
 			e.printStackTrace();
 		} 
     	this.deconnSQL();
+    }  
+      
+    
+    //清除某一用户发送的消息
+    public void cleanOneMessage(String openid){
+    	String update = "UPDATE "+ TABLE_NAME + " set message = '' where openid='" + openid + "'";
+    	System.out.println(update);
+    	try {	
+			this.connSQL();
+			stmt = conn.createStatement();
+			stmt.executeUpdate(update);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+    	this.deconnSQL();
     }
      
+    //更新配对消息
+    public void updateMessage(String openid,String message){
+    	String update = "UPDATE "+ TABLE_NAME + " set message='" +message+"' where openid='" + openid + "'";
+    	System.out.println(update);
+    	try {	
+			this.connSQL();
+			stmt = conn.createStatement();
+			stmt.executeUpdate(update);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+    	this.deconnSQL();
+    }
 }
 
