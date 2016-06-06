@@ -316,11 +316,19 @@ public class MessageUtil {
 		}
 		
 	}
-	//封装客服消息
-	public static String getCusContent(String fromUserName,String text){
+	//封装客服消息,文本消息类型
+	public static String getCusText(String fromUserName,String text){
 		String content = "{\"touser\":\"" + fromUserName + "\",\"msgtype\":\"text\",\"text\":{ \"content\": \"" + text + "\"}}";
 		return content;
 	}
-	
-	
+	//封装客服消息,图片消息类型
+	public static String getCusImage(String fromUserName,String media_id){
+		String content = "{\"touser\":\"" + fromUserName + "\",\"msgtype\":\"image\",\"image\":{ \"media_id\": \"" + media_id + "\"}}";
+		return content;
+	}
+	//封装客服消息,图片消息类型
+	public static String getCusVoice(String fromUserName,String media_id){
+		String content = "{\"touser\":\"" + fromUserName + "\",\"msgtype\":\"voice\",\"voice\":{ \"media_id\": \"" + media_id + "\"}}";
+		return content;
+	}
 }

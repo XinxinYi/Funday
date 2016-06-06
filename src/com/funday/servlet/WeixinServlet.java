@@ -58,6 +58,7 @@ public class WeixinServlet extends HttpServlet{
 			String creatTime = map.get("CreateTime ");
 			String msgType = map.get("MsgType");
 			String content = map.get("Content");
+			String mediaId = map.get("MediaId");
 			String msgId = map.get("MsgId ");
 			String eventType = map.get("Event");
 			String message = null;
@@ -75,7 +76,7 @@ public class WeixinServlet extends HttpServlet{
 					message = MessageUtil.initText(toUserName, fromUserName, CouponUtil.getCoupon());
 				}else if("测试客服接口".equals(content)){
 					for(int i=0;i<500002;i++){
-					String mess1 = MessageUtil.getCusContent(fromUserName, "测试"+i+"次");
+					String mess1 = MessageUtil.getCusText(fromUserName, "测试"+i+"次");
 					WeixinUtil.customSend(fromUserName, mess1);
 					System.out.println("测试了："+i+"次");
 					try{
@@ -181,12 +182,12 @@ public class WeixinServlet extends HttpServlet{
 								message = MessageUtil.initText(toUserName, fromUserName, mess);
 							}
 							
-							String mess1 = MessageUtil.getCusContent(toOpenid, "系统消息\n聊天开始，现在开始您发送的任何文字消息将直接推送给Ta");
+							String mess1 = MessageUtil.getCusText(toOpenid, "系统消息\n聊天开始，现在开始您发送的任何文字消息将直接推送给Ta");
 							WeixinUtil.customSend(toOpenid, mess1);
 							String mess = "系统消息\n聊天开始，现在开始您发送的任何文字消息将直接推送给对方！";
 							message = MessageUtil.initText(toUserName, fromUserName, mess);
 						}else{
-							String mess1 = MessageUtil.getCusContent(fromUserName, "系统消息\n聊天开始，现在开始您发送的任何文字消息将直接推送给Ta");
+							String mess1 = MessageUtil.getCusText(fromUserName, "系统消息\n聊天开始，现在开始您发送的任何文字消息将直接推送给Ta");
 							WeixinUtil.customSend(fromUserName, mess1);
 							String mess = "系统消息\n聊天开始，现在开始您发送的任何文字消息将直接推送给Ta";
 							message = MessageUtil.initText(toUserName, fromUserName, mess);
@@ -242,13 +243,13 @@ public class WeixinServlet extends HttpServlet{
 						//matchData.deleteMatchUser(fromUserName);						
 						result = "系统消息\n您已经退出随机配对聊天了！";
 						message = MessageUtil.initText(toUserName, fromUserName,result);
-						String toMess = MessageUtil.getCusContent(toOpenid, "系统消息\n对方已退出随机配对聊天了！");
+						String toMess = MessageUtil.getCusText(toOpenid, "系统消息\n对方已退出随机配对聊天了！");
 						WeixinUtil.customSend(toOpenid, toMess);
 					}else if(key.equals("31_matchChange")){
 						matchData.cleanMatch(fromUserName, toOpenid);
 						result = "系统消息\n点击‘开启聊天’重新开始一段旅程吧！";
 						message = MessageUtil.initText(toUserName, fromUserName,result);
-						String toMess = MessageUtil.getCusContent(toOpenid, "系统消息\n对方已退出随机配对聊天了！");
+						String toMess = MessageUtil.getCusText(toOpenid, "系统消息\n对方已退出随机配对聊天了！");
 						WeixinUtil.customSend(toOpenid, toMess);
 					}else{
 						result = "系统消息\n开始聊天了就专心的嘛！";
@@ -264,25 +265,37 @@ public class WeixinServlet extends HttpServlet{
 						matchData.cleanMatch(fromUserName, toOpenid);
 						matchData.deleteMatchUser(fromUserName);
 						//通知对方用户，已退出聊天
-						String toMess = MessageUtil.getCusContent(toOpenid, "系统消息\n对方已退出随机配对聊天了！");
+						String toMess = MessageUtil.getCusText(toOpenid, "系统消息\n对方已退出随机配对聊天了！");
 						WeixinUtil.customSend(toOpenid, toMess);
 					}
 				}
-				//进入配对流程，则其他操作均不接受，只能发送文本消息
-				else if(!MessageUtil.MESSAGE_TEXT.equals(msgType)){
-					result = "系统消息\n暂不支持文字以外的消息形式！";
-					message = MessageUtil.initText(toUserName, fromUserName,result);
-				}else{					
+				//发送图片消息给对方
+				else if(MessageUtil.MESSAGE_IMAGE.equals(msgType)){
+					
+					String postContent = MessageUtil.getCusImage(toOpenid, mediaId);
+					WeixinUtil.customSend(toOpenid, postContent);
+					message ="";
+				}
+				//发送语音消息给对方
+				else if(MessageUtil.MESSAGE_VOICE.equals(msgType)){
+					String postContent = MessageUtil.getCusVoice(toOpenid, mediaId);
+					WeixinUtil.customSend(toOpenid, postContent);
+					message ="";
+				}				
+				//发送文本消息给对方
+				else if(MessageUtil.MESSAGE_TEXT.equals(msgType)){					
 						matchData.updateMessage(fromUserName, content);											
 						matchUser = matchData.selectMatchUser(fromUserName);						
 						//message = MessageUtil.initText(toUserName, fromUserName, content);
 						MatchUser toUser = matchData.selectMatchUser(matchUser.getToOpenid());
-						String response = toUser.getMessage();
 						//message = MessageUtil.initText(toUserName, matchUser.getToOpenid(),content);							 						
-						String toMess = MessageUtil.getCusContent(matchUser.getToOpenid(), content);
+						String toMess = MessageUtil.getCusText(toOpenid, content);
 						WeixinUtil.customSend(matchUser.getToOpenid(), toMess);
 						message = "";
 																	
+				}else{
+					result = "系统消息\n暂不支持文字以外的消息形式！";
+					message = MessageUtil.initText(toUserName, fromUserName,result);
 				}					
 				out.print(message);													
 			}

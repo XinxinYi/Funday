@@ -10,10 +10,13 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -51,6 +54,7 @@ public class WeixinUtil {
 	private static final String APPSECRET = "b2c48b908458ad9a237f60e098749bcd";
 	private static final String ACCESS_TOKEN_URL = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=APPID&secret=APPSECRET";
 	private static final String UPLOAD_URL = "https://api.weixin.qq.com/cgi-bin/media/upload?access_token=ACCESS_TOKEN&type=TYPE";
+	private static final String GET_URL = "https://api.weixin.qq.com/cgi-bin/media/get?access_token=ACCESS_TOKEN&media_id=MEDIA_ID";
 	private static final String UPLOAD_FOREVER_URL = "https://api.weixin.qq.com/cgi-bin/material/add_material?access_token=ACCESS_TOKEN";
 	private static final String CREATE_MENU_URL = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token=ACCESS_TOKEN";
 	private static final String GET_USER_URL = "https://api.weixin.qq.com/cgi-bin/user/info?access_token=ACCESS_TOKEN&openid=OPENID&lang=zh_CN";
@@ -456,6 +460,57 @@ public class WeixinUtil {
 	
 	}
 	/*
+	 * http发送get请求
+	 * 
+	 */
+	 public static String httpGet(String media_id) {
+	        String result = "";
+	        BufferedReader in = null;
+	        try {
+	            String token = getExitAccessToken().getToken();				
+				String urlNameString = WeixinUtil.GET_URL.replace("ACCESS_TOKEN", token).replace("MEDIA_ID",media_id);
+	            URL realUrl = new URL(urlNameString);
+	            // 打开和URL之间的连接
+	            URLConnection connection = realUrl.openConnection();
+	            // 设置通用的请求属性
+	            connection.setRequestProperty("accept", "*/*");
+	            connection.setRequestProperty("connection", "Keep-Alive");
+	            connection.setRequestProperty("user-agent",
+	                    "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;SV1)");
+	            // 建立实际的连接
+	            connection.connect();
+	            // 获取所有响应头字段
+	            Map<String, List<String>> map = connection.getHeaderFields();
+	            // 遍历所有的响应头字段
+	            for (String key : map.keySet()) {
+	                System.out.println(key + "--->" + map.get(key));
+	            }
+	            // 定义 BufferedReader输入流来读取URL的响应
+	            in = new BufferedReader(new InputStreamReader(
+	                    connection.getInputStream()));
+	            String line;
+	            while ((line = in.readLine()) != null) {
+	                result += line;
+	            }
+	        } catch (Exception e) {
+	            System.out.println("发送GET请求出现异常！" + e);
+	            e.printStackTrace();
+	        }
+	        // 使用finally块来关闭输入流
+	        finally {
+	            try {
+	                if (in != null) {
+	                    in.close();
+	                }
+	            } catch (Exception e2) {
+	                e2.printStackTrace();
+	            }
+	        }
+	        return result;
+	    }
+	
+	
+	/*
 	 * 组装菜单
 	 */
 	public static Menu initMenu(){
@@ -602,7 +657,7 @@ public class WeixinUtil {
 		return points;
 	}
 	
-	
+	//post客服消息
 	public static void customSend(String fromUserName,String cusContent)throws ClientProtocolException, IOException{		
 		try{	
 			String token = getExitAccessToken().getToken();				
@@ -614,6 +669,6 @@ public class WeixinUtil {
 			e.printStackTrace();
 		}
 		
-	}
+	}	
 	
 }
